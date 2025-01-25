@@ -1,17 +1,5 @@
 
 services:
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "8081:8081" 
-    volumes:
-      - ./frontend:/app 
-    environment:
-      - REACT_APP_API_URL=http://localhost:4000 
-      - EXPO_DEV_TOOLS_LISTEN_ADDRESS=0.0.0.0
-      - EXPO_NO_PUBLISH=1
-      - EXPO_USE_WEBPACK=false
   backend:
     build:
       context: ./backend 
