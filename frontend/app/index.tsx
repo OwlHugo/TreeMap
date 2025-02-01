@@ -1,21 +1,29 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { View, Text, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import Logo from "@/components/Logo";
 import TextLogo from "@/components/TextLogo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getUserToken, removeUserToken } from "@/utils/auth";
+import { validateAuthToken } from "@/services/api";
 const Index: React.FC = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const isAuthenticated = false;
-      if (isAuthenticated) {
+    const checkAuth = async () => {
+      const isValidToken = await validateAuthToken();
+      if (isValidToken) {
         router.replace("/home");
       } else {
+        await removeUserToken();
         router.replace("/login");
       }
-    }, 5000);
-    return () => clearTimeout(timer);
+      setLoading(false);
+    };
+
+    checkAuth();
   }, []);
   return (
     <View style={styles.splashContainer}>

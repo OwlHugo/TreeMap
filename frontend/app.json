@@ -9,9 +9,17 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "infoPlist": {
+        "NSCameraUsageDescription": "Este aplicativo usa a câmera para escanear QR Codes."
+      },
       "supportsTablet": true
     },
     "android": {
+      "android": {
+        "permissions": [
+          "CAMERA"
+        ]
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

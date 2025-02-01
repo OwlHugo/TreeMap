@@ -1,57 +1,61 @@
-import { useFonts } from "expo-font";
-import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
-  Image,
   TouchableOpacity,
   Animated,
-  Easing,
+  StatusBar,
+  ActivityIndicator,
 } from "react-native";
+import { useRouter } from "expo-router";
+import { useAnimation } from "../hooks/useAnimation";
+import { loginUser } from "../services/api";
+import Toast from "react-native-toast-message";
+import { setUserToken } from "@/utils/auth";
+import FormInput from "@/components/FormInput";
 
-export default function Login() {
+const login: React.FC = () => {
   const router = useRouter();
+  const { fadeIn, slideUp, scale } = useAnimation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    "Poppins-Bold": require("../assets/fonts/Poppins-Bold.ttf"),
-  });
-
-  const fadeIn = new Animated.Value(0);
-  const slideUp = new Animated.Value(25);
-  const scale = new Animated.Value(0.8);
-
-  useEffect(() => {
-    if (loaded) {
-      Animated.stagger(150, [
-        Animated.timing(fadeIn, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-          easing: Easing.out(Easing.ease),
-        }),
-        Animated.timing(slideUp, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-          easing: Easing.out(Easing.cubic),
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          tension: 35,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-      ]).start();
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: "Por favor, preencha todos os campos",
+      });
+      return;
     }
-  }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+    setLoading(true);
+    try {
+      const response = await loginUser({ email, password });
+
+      setUserToken(response.data.token);
+
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: "Login realizado com sucesso!",
+      });
+
+      // Redireciona para a tela inicial (home)
+      router.replace("/home");
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: error.message || "Erro ao realizar login",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -71,8 +75,17 @@ export default function Login() {
           <Animated.View
             style={[styles.inputs, { transform: [{ translateY: slideUp }] }]}
           >
-            <TextInput style={styles.input} placeholder="Email" />
-            <TextInput style={styles.input} placeholder="Senha" />
+            <FormInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <FormInput
+              placeholder="Senha"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
           </Animated.View>
 
           <Animated.Text
@@ -84,8 +97,18 @@ export default function Login() {
           <Animated.View
             style={[styles.actions, { transform: [{ translateY: slideUp }] }]}
           >
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Entrar</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  "Entrar"
+                )}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.button2}
@@ -95,28 +118,11 @@ export default function Login() {
             </TouchableOpacity>
           </Animated.View>
         </View>
-
-        <Animated.View
-          style={[
-            styles.socialMedia,
-            { opacity: fadeIn, transform: [{ scale }] },
-          ]}
-        >
-          <Text style={styles.socialMediaText}>Ou entre com</Text>
-          <View style={styles.google}>
-            <View style={styles.frame}>
-              <Image
-                source={require("../assets/images/google-logo-bold-svgrepo-com.png")}
-                style={styles.googleImage}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
-        </Animated.View>
       </Animated.View>
+      <Toast />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -124,11 +130,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     paddingTop: 40,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
   },
   loginHere: {
     color: "#51007c",
@@ -152,30 +153,12 @@ const styles = StyleSheet.create({
   inputs: {
     display: "flex",
     flexDirection: "column",
-    gap: 29,
+    gap: 20,
     alignItems: "flex-start",
     justifyContent: "flex-start",
     flexShrink: 0,
     position: "relative",
     marginTop: 30,
-  },
-  input: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#51007c",
-    padding: 16,
-    width: 350,
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   forgetYourPassword: {
     color: "#51007c",
@@ -188,7 +171,7 @@ const styles = StyleSheet.create({
   actions: {
     display: "flex",
     flexDirection: "column",
-    gap: 20,
+    gap: 15,
     alignItems: "flex-start",
     justifyContent: "flex-start",
     flexShrink: 0,
@@ -199,91 +182,33 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     width: 350,
+    height: 56,
     alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
   button2: {
     backgroundColor: "#ffffff",
-    paddingTop: 15,
-    paddingRight: 30,
-    paddingBottom: 15,
-    paddingLeft: 30,
-    display: "flex",
-    flexDirection: "row",
+    padding: 15,
+    width: 350,
+    height: 56,
     alignItems: "center",
     justifyContent: "center",
-    flexShrink: 0,
-    position: "relative",
-    width: 350,
   },
   buttonText: {
     color: "#fff",
-    textAlign: "center",
     fontSize: 20,
     fontWeight: "600",
-    position: "relative",
   },
   buttonText2: {
     color: "#494949",
-    textAlign: "center",
     fontSize: 14,
     fontWeight: "600",
-    position: "relative",
-  },
-  socialMedia: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 20,
-    justifyContent: "flex-start",
-    position: "relative",
-  },
-  socialMediaText: {
-    color: "#51007c",
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "600",
-    position: "relative",
-  },
-  google: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    position: "relative",
-  },
-  frame: {},
-  googleImage: {
-    width: 40,
-    height: 40,
-    resizeMode: "contain",
-  },
-  createAccountButton: {
-    borderWidth: 2,
-    borderColor: "#2E7D32",
-  },
-  googleButton: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 12,
-    width: 50,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
 });
+
+export default login;

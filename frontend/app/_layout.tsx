@@ -1,3 +1,5 @@
+import { validateAuthToken } from "@/services/api";
+import { getUserToken, removeUserToken } from "@/utils/auth";
 import {
   DarkTheme,
   DefaultTheme,
@@ -8,8 +10,7 @@ import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
-
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,11 +23,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
-      const timer = setTimeout(() => {
-        const isAuthenticated = false;
-        if (isAuthenticated) {
+      const timer = setTimeout(async () => {
+        const isValidToken = await validateAuthToken();
+
+        if (isValidToken) {
           router.replace("/home");
         } else {
+          await removeUserToken();
           router.replace("/login");
         }
       }, 3000);
@@ -40,17 +43,19 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen
-        name="index"
-        options={{
-          headerShown: false,
-          presentation: "containedModal",
-        }}
-      />
-      <Stack.Screen name="home" options={{ headerShown: false }} />
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="register" options={{ headerShown: false }} />
-    </Stack>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Stack>
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+            presentation: "containedModal",
+          }}
+        />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ headerShown: false }} />
+      </Stack>
+    </SafeAreaView>
   );
 }

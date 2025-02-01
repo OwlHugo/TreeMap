@@ -1,55 +1,72 @@
-import { useFonts } from "expo-font";
-import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   Animated,
-  Easing,
-  Image,
 } from "react-native";
-export default function Register() {
+import { useRouter } from "expo-router";
+import { useAnimation } from "../hooks/useAnimation";
+import { registerUser } from "../services/api";
+import Toast from "react-native-toast-message";
+import FormInput from "@/components/FormInput";
+
+const Register: React.FC = () => {
   const router = useRouter();
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    "Poppins-Bold": require("../assets/fonts/Poppins-Bold.ttf"),
-  });
+  const { fadeIn, slideUp, scale } = useAnimation();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const fadeIn = new Animated.Value(0);
-  const slideUp = new Animated.Value(15);
-  const scale = new Animated.Value(0.95);
-
-  useEffect(() => {
-    if (loaded) {
-      Animated.stagger(150, [
-        Animated.timing(fadeIn, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-          easing: Easing.out(Easing.ease),
-        }),
-        Animated.timing(slideUp, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-          easing: Easing.out(Easing.cubic),
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          tension: 35,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-      ]).start();
+  const handleRegister = async () => {
+    if (!name || !email || !password || !confirmPassword) {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: "Por favor, preencha todos os campos",
+      });
+      return;
     }
-  }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+    if (password !== confirmPassword) {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: "As senhas não coincidem",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await registerUser({
+        name,
+        email,
+        password,
+        c_password: confirmPassword,
+      });
+      if (!response || !response.data || !response.data.token) {
+        throw new Error("Resposta inválida da API");
+      }
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: "Usuário cadastrado com sucesso!",
+      });
+      router.replace("/login");
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: error.message || "Erro ao cadastrar usuário",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -69,16 +86,26 @@ export default function Register() {
           <Animated.View
             style={[styles.inputs, { transform: [{ translateY: slideUp }] }]}
           >
-            <TextInput style={styles.input} placeholder="Nome completo" />
-            <TextInput style={styles.input} placeholder="Email" />
-            <TextInput
-              style={styles.input}
+            <FormInput
+              placeholder="Nome completo"
+              value={name}
+              onChangeText={setName}
+            />
+            <FormInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <FormInput
               placeholder="Senha"
+              value={password}
+              onChangeText={setPassword}
               secureTextEntry
             />
-            <TextInput
-              style={styles.input}
+            <FormInput
               placeholder="Confirmar senha"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
               secureTextEntry
             />
           </Animated.View>
@@ -86,8 +113,14 @@ export default function Register() {
           <Animated.View
             style={[styles.actions, { transform: [{ translateY: slideUp }] }]}
           >
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Criar conta</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? "Carregando..." : "Criar conta"}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.replace("/login")}
@@ -98,9 +131,10 @@ export default function Register() {
           </Animated.View>
         </View>
       </Animated.View>
+      <Toast />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -138,25 +172,6 @@ const styles = StyleSheet.create({
     position: "relative",
     marginTop: 30,
   },
-  input: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#51007c",
-    padding: 16,
-    width: 350,
-    height: 56,
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
   actions: {
     display: "flex",
     flexDirection: "column",
@@ -175,10 +190,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -202,3 +214,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+export default Register;
