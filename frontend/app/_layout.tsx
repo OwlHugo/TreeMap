@@ -1,4 +1,4 @@
-import { validateAuthToken } from "@/services/api";
+// app/_layout.tsx
 import { getUserToken, removeUserToken } from "@/utils/auth";
 import {
   DarkTheme,
@@ -11,6 +11,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { UserProvider } from "../contexts/UserContext";
+import { validateAuthToken } from "@/services/authService";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,7 +32,7 @@ export default function RootLayout() {
           router.replace("/home");
         } else {
           await removeUserToken();
-          router.replace("/login");
+          router.replace("/Login");
         }
       }, 3000);
 
@@ -43,19 +45,21 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Stack>
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShown: false,
-            presentation: "containedModal",
-          }}
-        />
-        <Stack.Screen name="home" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-      </Stack>
-    </SafeAreaView>
+    <UserProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <Stack>
+          <Stack.Screen
+            name="index"
+            options={{
+              headerShown: false,
+              presentation: "containedModal",
+            }}
+          />
+          <Stack.Screen name="home" options={{ headerShown: false }} />
+          <Stack.Screen name="Login" options={{ headerShown: false }} />
+          <Stack.Screen name="Register" options={{ headerShown: false }} />
+        </Stack>
+      </SafeAreaView>
+    </UserProvider>
   );
 }

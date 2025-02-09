@@ -2,8 +2,8 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { View, Text } from "react-native";
-import HomeScreen from "./Screens/HomeScreen";
-import  FeedScreen  from "./Screens/FeedScreen";
+import HomeScreen from "./Screens/Home/HomeScreen";
+import  FeedScreen  from "./Screens/Feed/FeedScreen";
 
 const ProfileScreen: React.FC = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

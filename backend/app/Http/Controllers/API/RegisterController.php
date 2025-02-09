@@ -47,12 +47,8 @@ class RegisterController extends BaseController
     {
         if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
             $user = Auth::user();
-            $token = $user->createToken('TreeMap')->plainTextToken;
-            $user->forceFill([
-                'remember_token' => $token,
-            ])->save();
+            $token = $user->createToken('auth-token')->plainTextToken;
             $success['token'] = $token;
-
             $success['name'] =  $user->name;
 
             return $this->sendResponse($success, 'User login successfully.');
@@ -61,4 +57,5 @@ class RegisterController extends BaseController
             return $this->sendError('Unauthorised.', ['error'=>'Unauthorised']);
         }
     }
+
 }

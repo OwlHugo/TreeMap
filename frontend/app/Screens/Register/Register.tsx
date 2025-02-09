@@ -5,25 +5,24 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  StatusBar,
-  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAnimation } from "../hooks/useAnimation";
-import { loginUser } from "../services/api";
 import Toast from "react-native-toast-message";
-import { setUserToken } from "@/utils/auth";
 import FormInput from "@/components/FormInput";
+import { registerUser } from "@/services/authService";
 
-const login: React.FC = () => {
+const Register: React.FC = () => {
   const router = useRouter();
   const { fadeIn, slideUp, scale } = useAnimation();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
+  const handleRegister = async () => {
+    if (!name || !email || !password || !confirmPassword) {
       Toast.show({
         type: "error",
         text1: "Erro",
@@ -32,25 +31,37 @@ const login: React.FC = () => {
       return;
     }
 
+    if (password !== confirmPassword) {
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: "As senhas não coincidem",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await loginUser({ email, password });
-
-      setUserToken(response.data.token);
-
+      const response = await registerUser({
+        name,
+        email,
+        password,
+        c_password: confirmPassword,
+      });
+      if (!response || !response.data || !response.data.token) {
+        throw new Error("Resposta inválida da API");
+      }
       Toast.show({
         type: "success",
         text1: "Sucesso",
-        text2: "Login realizado com sucesso!",
+        text2: "Usuário cadastrado com sucesso!",
       });
-
-      // Redireciona para a tela inicial (home)
-      router.replace("/home");
+      router.replace("/Login");
     } catch (error: any) {
       Toast.show({
         type: "error",
         text1: "Erro",
-        text2: error.message || "Erro ao realizar login",
+        text2: error.message || "Erro ao cadastrar usuário",
       });
     } finally {
       setLoading(false);
@@ -68,13 +79,18 @@ const login: React.FC = () => {
       <Animated.View
         style={[{ transform: [{ translateY: slideUp }] }, { opacity: fadeIn }]}
       >
-        <Text style={styles.welcomeBack}>Mapeando um futuro mais verde</Text>
-        <Text style={styles.welcomeBack}>Cada árvore conta uma história</Text>
+        <Text style={styles.welcomeBack}>Junte-se à comunidade verde</Text>
+        <Text style={styles.welcomeBack}>Faça parte desta história</Text>
 
         <View style={styles.inputContainer}>
           <Animated.View
             style={[styles.inputs, { transform: [{ translateY: slideUp }] }]}
           >
+            <FormInput
+              placeholder="Nome completo"
+              value={name}
+              onChangeText={setName}
+            />
             <FormInput
               placeholder="Email"
               value={email}
@@ -86,35 +102,31 @@ const login: React.FC = () => {
               onChangeText={setPassword}
               secureTextEntry
             />
+            <FormInput
+              placeholder="Confirmar senha"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
           </Animated.View>
-
-          <Animated.Text
-            style={[styles.forgetYourPassword, { opacity: fadeIn }]}
-          >
-            Esqueceu a senha?
-          </Animated.Text>
 
           <Animated.View
             style={[styles.actions, { transform: [{ translateY: slideUp }] }]}
           >
             <TouchableOpacity
               style={styles.button}
-              onPress={handleLogin}
+              onPress={handleRegister}
               disabled={loading}
             >
               <Text style={styles.buttonText}>
-                {loading ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  "Entrar"
-                )}
+                {loading ? "Carregando..." : "Criar conta"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={() => router.replace("/Login")}
               style={styles.button2}
-              onPress={() => router.replace("/register")}
             >
-              <Text style={styles.buttonText2}>Criar nova conta</Text>
+              <Text style={styles.buttonText2}>Já tenho uma conta</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -160,14 +172,6 @@ const styles = StyleSheet.create({
     position: "relative",
     marginTop: 30,
   },
-  forgetYourPassword: {
-    color: "#51007c",
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "600",
-    fontFamily: "Poppins-Bold",
-    position: "relative",
-  },
   actions: {
     display: "flex",
     flexDirection: "column",
@@ -211,4 +215,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default login;
+export default Register;
+
